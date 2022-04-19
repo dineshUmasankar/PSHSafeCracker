@@ -1,6 +1,6 @@
 package com.psu.dqu5021;
 
-public class Node {
+public class Node implements Comparable<Node> {
     int currNum;        // Current Lock Code
     char direction;     // U or D - for the move that got us to this combination
     int digitMoved;     // Which digit was moved to get us here
@@ -39,5 +39,13 @@ public class Node {
         }
 
         return new Node(currNum + (newDigit - currentDigit) * base, this, direction, digit);
+    }
+
+    // TODO
+    @Override
+    public int compareTo(Node o) {
+        String thisNode = this.direction + Integer.toString(this.digitMoved);
+        String comparingNode = o.direction + Integer.toString(o.digitMoved);
+        return thisNode.compareTo(comparingNode);
     }
 }
