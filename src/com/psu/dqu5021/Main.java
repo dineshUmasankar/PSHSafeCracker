@@ -1,16 +1,7 @@
 package com.psu.dqu5021;
 
 import java.io.*;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Queue;
-import java.util.Set;
-import java.util.Stack;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 public class Main {
 
@@ -19,7 +10,11 @@ public class Main {
         HashSet<Integer> forbiddenValues = new HashSet<Integer>();
 
         // Storage for node discovery
-        TreeSet<Node> nodeTree = new TreeSet<Node>();
+        Queue<Node> nodeQueue = new LinkedList<Node>();
+
+        // Storage for output
+        Stack<Node> targetNodePath = new Stack<>();
+
         StringBuilder output = new StringBuilder();
 
         // Read input for the problem
@@ -42,26 +37,148 @@ public class Main {
 
         // Starting Node
         Node startNode = new Node(startCode);
+        nodeQueue.add(startNode);
+        forbiddenValues.add(startNode.currNum);
+
+//        System.out.println("Root Node");
+//        printQueue(nodeQueue);
+//        System.out.println("Forbidden Values");
+//        printSet(forbiddenValues);
+
+
+        boolean targetFound = false;
+//        int level = 0;
+        while (!targetFound)
+        {
+            createNextLevel(nodeQueue.poll(), digitCount, nodeQueue, forbiddenValues);
+
+            if (forbiddenValues.contains(targetCode))
+                targetFound = true;
+//            level++;
+
+//            System.out.println("Level " + level);
+//           printQueue(nodeQueue);
+
+//            System.out.println("Forbidden Values");
+//            printSet(forbiddenValues);
+        }
+
+        Iterator <Node> itr = nodeQueue.iterator();
+        Node targetNode = null;
+        while (itr.hasNext())
+        {
+            Node currentNode = itr.next();
+            if (currentNode.currNum == targetCode)
+            {
+                targetNode = currentNode;
+                break;
+            }
+        }
+
+//        System.out.println("Target path");
+
+        while (targetNode != null)
+        {
+            targetNodePath.push(targetNode);
+            targetNode = targetNode.prevNode;
+        }
+
+        System.out.println(targetNodePath.size()-1);
+
+        targetNodePath.pop();
+        while (!targetNodePath.empty())
+        {
+            Node printPath = targetNodePath.pop();
+            System.out.print(printPath.direction);
+            System.out.print(printPath.digitMoved + "\t");
+            System.out.printf("%0" + digitCount + "d" + "\n", printPath.currNum);
+        }
+    }
+
+    static void createNextLevel(Node fromNode, int digitCount, Queue<Node> nodeQueue, HashSet<Integer> forbiddenValues)
+    {
         for (int i = 0; i<digitCount; i++)
         {
-            Node down = startNode.changeCode('D', i+1, digitCount);
-            System.out.print(down.direction);
-            System.out.print(down.digitMoved);
-            System.out.print("\t" + down.currNum + "\n");
+            Node down = fromNode.changeCode('D', i+1, digitCount);
+            if (!forbiddenValues.contains(down.currNum))
+            {
+                nodeQueue.add(down);
+                forbiddenValues.add(down.currNum);
+            }
         }
 
         for (int i = 0; i<digitCount; i++)
         {
-            Node up = startNode.changeCode('U', i+1, digitCount);
-            System.out.print(up.direction);
-            System.out.print(up.digitMoved);
-            System.out.print("\t" + up.currNum + "\n");
+            Node up = fromNode.changeCode('U', i+1, digitCount);
+            if (!forbiddenValues.contains(up.currNum))
+            {
+                nodeQueue.add(up);
+                forbiddenValues.add(up.currNum);
+            }
+        }
+    }
+
+//    static void printQueue(Queue<Node> nodeQueue)
+//    {
+//        Iterator<Node> itr = nodeQueue.iterator();
+//        while (itr.hasNext())
+//        {
+//            Node headQueue = itr.next();
+//            System.out.print(headQueue.direction);
+//            System.out.print(headQueue.digitMoved);
+//            System.out.print("\t" + headQueue.currNum + "\n");
+//        }
+//    }
+
+//    static void printSet(HashSet<Integer> forbiddenValues)
+//    {
+//        Iterator<Integer> itr = forbiddenValues.iterator();
+//        while (itr.hasNext())
+//        {
+//            int headQueue = itr.next();
+//            System.out.print("\t" + headQueue + "\n");
+//        }
+//    }
+}
+
+class Node {
+    int currNum;        // Current Lock Code
+    char direction;     // U or D - for the move that got us to this combination
+    int digitMoved;     // Which digit was moved to get us here
+    Node prevNode;      // Link to the previous state
+
+    public Node(int currNum) {
+        this.currNum = currNum;
+    }
+
+    public Node(int currNum, Node prevNode, char direction, int digitMoved) {
+        this.currNum = currNum;
+        this.prevNode = prevNode;
+        this.direction = direction;
+        this.digitMoved = digitMoved;
+    }
+
+    /**
+     * Return number that results from taking the current state and moving a digit either
+     * up or down.
+     *
+     * @param direction either 'U' or 'D' for the direction of movement (up or down)
+     * @param digit the digit that was moved
+     *
+     * @return the new lock code
+     */
+    public Node changeCode(char direction, int digit, int digitCount) {
+        int base = (int) Math.pow(10, digitCount - digit);
+        int newDigit;
+        int currentDigit = (currNum /base) % 10;
+
+        if (direction == 'U') {
+            newDigit = (currentDigit + 1) % 10;
+        }
+        else {
+            newDigit = (currentDigit + 9) % 10;
         }
 
-
-//        System.out.println(nodeTree.size());
-//        nodeTree.add(startNode);
-//        System.out.println(nodeTree.size());
-
+        return new Node(currNum + (newDigit - currentDigit) * base, this, direction, digit);
     }
 }
