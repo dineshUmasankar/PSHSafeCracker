@@ -10,10 +10,10 @@ public class Main {
         HashSet<Integer> forbiddenValues = new HashSet<Integer>();
 
         // Storage for node discovery
-        Queue<Node> nodeQueue = new LinkedList<Node>();
+        Queue<Node> nodeQueue = new ArrayDeque<Node>();
 
         // Storage for output
-        Stack<Node> targetNodePath = new Stack<>();
+        Stack<Node> targetNodePath = new Stack<Node>();
 
         StringBuilder output = new StringBuilder();
 
@@ -32,13 +32,13 @@ public class Main {
         if (forbiddenValues.contains(startCode) || forbiddenValues.contains(targetCode))
         {
             output.append(-1);
-            System.out.println(output);
         }
-
-        // Starting Node
-        Node startNode = new Node(startCode);
-        nodeQueue.add(startNode);
-        forbiddenValues.add(startNode.currNum);
+        else
+        {
+            // Starting Node
+            Node startNode = new Node(startCode);
+            nodeQueue.add(startNode);
+            forbiddenValues.add(startNode.currNum);
 
 //        System.out.println("Root Node");
 //        printQueue(nodeQueue);
@@ -46,14 +46,21 @@ public class Main {
 //        printSet(forbiddenValues);
 
 
-        boolean targetFound = false;
+            boolean targetFound = false;
 //        int level = 0;
-        while (!targetFound)
-        {
-            createNextLevel(nodeQueue.poll(), digitCount, nodeQueue, forbiddenValues);
+            while (!targetFound)
+            {
+                if (nodeQueue.peek() == null)
+                {
+                    targetFound = true;
+                }
+                else
+                {
+                    createNextLevel(nodeQueue.poll(), digitCount, nodeQueue, forbiddenValues);
 
-            if (forbiddenValues.contains(targetCode))
-                targetFound = true;
+                    if (forbiddenValues.contains(targetCode))
+                        targetFound = true;
+                }
 //            level++;
 
 //            System.out.println("Level " + level);
@@ -61,38 +68,45 @@ public class Main {
 
 //            System.out.println("Forbidden Values");
 //            printSet(forbiddenValues);
-        }
-
-        Iterator <Node> itr = nodeQueue.iterator();
-        Node targetNode = null;
-        while (itr.hasNext())
-        {
-            Node currentNode = itr.next();
-            if (currentNode.currNum == targetCode)
-            {
-                targetNode = currentNode;
-                break;
             }
-        }
+
+            // Could also be done by just dequeue until target
+            Iterator <Node> itr = nodeQueue.iterator();
+            Node targetNode = null;
+            while (itr.hasNext())
+            {
+                Node currentNode = itr.next();
+                if (currentNode.currNum == targetCode)
+                {
+                    targetNode = currentNode;
+                    break;
+                }
+            }
 
 //        System.out.println("Target path");
 
-        while (targetNode != null)
-        {
-            targetNodePath.push(targetNode);
-            targetNode = targetNode.prevNode;
+            while (targetNode != null)
+            {
+                targetNodePath.push(targetNode);
+                targetNode = targetNode.prevNode;
+            }
+
+            output.append(targetNodePath.size()-1 + "\n");
+
+            if (targetNodePath.size() >= 1)
+                targetNodePath.pop();
+
+            while (!targetNodePath.empty())
+            {
+                Node printPath = targetNodePath.pop();
+                String path = printPath.direction + "";
+                path += printPath.digitMoved + " ";
+                path += String.format("%0" + digitCount + "d" + "\n", printPath.currNum);
+                output.append(path);
+            }
+            System.out.println(output);
         }
 
-        System.out.println(targetNodePath.size()-1);
-
-        targetNodePath.pop();
-        while (!targetNodePath.empty())
-        {
-            Node printPath = targetNodePath.pop();
-            System.out.print(printPath.direction);
-            System.out.print(printPath.digitMoved + "\t");
-            System.out.printf("%0" + digitCount + "d" + "\n", printPath.currNum);
-        }
     }
 
     static void createNextLevel(Node fromNode, int digitCount, Queue<Node> nodeQueue, HashSet<Integer> forbiddenValues)
